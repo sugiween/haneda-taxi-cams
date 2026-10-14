@@ -146,6 +146,7 @@ footer p { margin: 0 0 8px; }
 <footer>
   <p>出典: 東京タクシーセンター 羽田空港TPシステム
     （<a href="https://www.tokyo-tc.or.jp/driver/stand/livecamera/" target="_blank" rel="noopener noreferrer">ライブカメラ案内</a>）</p>
+  <p id="views" hidden></p>
   <p>公式の各ページ:</p>
   <ul class="links">
     <li><a href="https://ttc.taxi-inf.jp/index.php" target="_blank" rel="noopener noreferrer">第1待機所</a></li>
@@ -155,6 +156,7 @@ footer p { margin: 0 0 8px; }
     <li><a href="https://ttc.taxi-inf.jp/No4TaxiStand.php" target="_blank" rel="noopener noreferrer">第4乗り場</a></li>
     <li><a href="https://ttc.taxi-inf.jp/No5TaxiStand.php" target="_blank" rel="noopener noreferrer">第5乗り場</a></li>
   </ul>
+  <p>ページを開いた回数を数えるため、外部のカウンター（Abacus）へ「1 足す」だけの通信を送ります。名前や位置などは送りません。</p>
   <p class="warn">運転中は見ない。停車して確認</p>
 </footer>
 
@@ -165,6 +167,11 @@ footer p { margin: 0 0 8px; }
 
 const BASE = 'https://ttc.taxi-inf.jp/';
 const INTERVAL_MS = 30000;
+
+// ページを開いた回数を数える。公開ページでだけ送る (手元の確認やコピー先では通信しない)。フォークしたら host と ns を自分のものに変える
+const COUNTER = { host: 'sugiween.github.io', api: 'https://abacus.jasoncameron.dev', ns: 'sugiween-haneda-taxi-cams' };
+const countOn = location.hostname === COUNTER.host && typeof fetch === 'function';
+const viewsLine = document.getElementById('views');
 
 const GROUPS = [
   { id: 'domestic', name: '国内線', area: 'T1・T2', stamp: true },
@@ -281,6 +288,19 @@ function loadView(v) {
   pre.src = v.url + '?t=' + Date.now();
 }
 
+// 1 足して、返ってきた回数をフッターに出す。404・失敗・数字でない応答のときは行ごと隠したまま
+function counter(key) {
+  if (!countOn) return;
+  fetch(`${COUNTER.api}/hit/${COUNTER.ns}/${key}`, { keepalive: true })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      if (!j || typeof j.value !== 'number') return;
+      viewsLine.textContent = 'これまでに開かれた回数 ' + j.value.toLocaleString() + ' 回';
+      viewsLine.hidden = false;
+    })
+    .catch(() => {});
+}
+
 function refreshNow() {
   views.forEach(loadView);
   clearInterval(timer);
@@ -294,6 +314,7 @@ stepCols(0);
 document.getElementById('refresh').addEventListener('click', refreshNow);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshNow(); });
 refreshNow();
+counter('views');
 </script>
 </body>
 </html>
