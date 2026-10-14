@@ -19,6 +19,8 @@
   --img-bg: #dfe4ea;
   --fail: #b3261e;
   --fail-bg: #fde8e6;
+  --flash-bg: #ffc107;
+  --flash-text: #1a2230;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -32,6 +34,8 @@
     --img-bg: #0c0f13;
     --fail: #ff9a90;
     --fail-bg: #3b1d1b;
+    --flash-bg: #7a5c00;
+    --flash-text: #fff3c4;
   }
 }
 * { box-sizing: border-box; }
@@ -59,11 +63,20 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 }
 .stamp {
   margin-left: auto;
+  margin-right: -6px;
+  padding: 1px 6px;
+  border-radius: 4px;
   color: var(--muted);
   font-size: 13px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+@keyframes stamp-flash {
+  from { background-color: var(--flash-bg); color: var(--flash-text); }
+  to { background-color: transparent; color: var(--muted); }
+}
+.stamp.flash { animation: stamp-flash 2s ease-in; }
+@media (prefers-reduced-motion: reduce) { .stamp.flash { animation-timing-function: step-end; } }
 .bar button {
   min-height: 34px;
   padding: 0 12px;
@@ -81,7 +94,7 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 12px; }
 
 main { max-width: 1680px; margin: 0 auto; padding: 0 12px 8px; }
-h2 { margin: 22px 0 8px; font-size: 18px; }
+h2 { margin: 8px 0; font-size: 18px; }
 h2 small { font-size: 14px; font-weight: 400; color: var(--muted); }
 .grid { display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 6px; align-items: start; }
 
@@ -121,7 +134,7 @@ footer p { margin: 0 0 8px; }
   <button type="button" id="refresh">今すぐ更新</button>
 </header>
 <!-- 通信量の根拠: 2026-10-14 12:3x 実測 13 枚合計 639KB × 120 回/時 = 約 77MB/時 (表示は約 80MB に丸め) -->
-<p class="notice">30秒ごとに13枚の画像を読み込むため通信量がかかります（目安：1回 約0.6MB・1時間 約80MB）</p>
+<p class="notice">30秒ごとに自動更新します。通信料目安→1回 約0.6MB・1時間 約80MB</p>
 
 <main id="app"></main>
 
@@ -239,6 +252,13 @@ function onLoaded(v, src) {
   v.fail.hidden = true;
   v.card.classList.remove('failed');
   stamp.textContent = '最終更新 ' + now;
+  flashStamp();
+}
+
+function flashStamp() {
+  stamp.classList.remove('flash');
+  void stamp.offsetWidth;
+  stamp.classList.add('flash');
 }
 
 function onFailed(v) {
