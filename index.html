@@ -71,12 +71,17 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-@keyframes stamp-flash {
+@keyframes update-flash {
   from { background-color: var(--flash-bg); color: var(--flash-text); }
   to { background-color: transparent; color: var(--muted); }
 }
-.stamp.flash { animation: stamp-flash 2s ease-in; }
-@media (prefers-reduced-motion: reduce) { .stamp.flash { animation-timing-function: step-end; } }
+.flash .stamp, .flash .edges span { animation: update-flash 2s ease-in; }
+@media (prefers-reduced-motion: reduce) { .flash .stamp, .flash .edges span { animation-timing-function: step-end; } }
+/* 画面の左右両脇 (カードの外側の余白) を縦全体で光らせる帯。幅は main の max-width 1680px・左右 padding 12px と揃える */
+.edges { position: fixed; inset: 0; pointer-events: none; }
+.edges span { position: absolute; top: 0; bottom: 0; width: max(12px, calc((100% - 1680px) / 2 + 12px)); }
+.edges span:first-child { left: 0; }
+.edges span:last-child { right: 0; }
 .bar button {
   min-height: 34px;
   padding: 0 12px;
@@ -152,6 +157,8 @@ footer p { margin: 0 0 8px; }
   </ul>
   <p class="warn">運転中は見ない。停車して確認</p>
 </footer>
+
+<div class="edges" aria-hidden="true"><span></span><span></span></div>
 
 <script>
 'use strict';
@@ -252,13 +259,14 @@ function onLoaded(v, src) {
   v.fail.hidden = true;
   v.card.classList.remove('failed');
   stamp.textContent = '最終更新 ' + now;
-  flashStamp();
+  flashUpdate();
 }
 
-function flashStamp() {
-  stamp.classList.remove('flash');
-  void stamp.offsetWidth;
-  stamp.classList.add('flash');
+function flashUpdate() {
+  const root = document.documentElement;
+  root.classList.remove('flash');
+  void root.offsetWidth;
+  root.classList.add('flash');
 }
 
 function onFailed(v) {
